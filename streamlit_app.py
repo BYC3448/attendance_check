@@ -229,25 +229,42 @@ else:
 st.markdown("---")
 st.markdown("### ➕ 학생 추가")
 
-col1, col2 = st.columns([3, 1])
+# 학생 추가 후 입력창 초기화를 위한 플래그
+if 'clear_input' not in st.session_state:
+    st.session_state.clear_input = False
 
-with col1:
-    new_student_name = st.text_input("학생 이름을 입력하세요", key="student_input")
+# 학생 추가 함수
+def add_student_func(name):
+    if name.strip():
+        new_student = {
+            'id': str(datetime.datetime.now().timestamp()),
+            'name': name.strip()
+        }
+        st.session_state.students.append(new_student)
+        st.session_state.clear_input = True  # 다음 렌더링에서 입력창 초기화
+        st.success(f"'{name}' 학생이 추가되었습니다!")
+        st.rerun()
+    else:
+        st.error("학생 이름을 입력해주세요!")
 
-with col2:
-    st.markdown("<br>", unsafe_allow_html=True)  # 간격 맞추기
-    if st.button("추가", key="add_student_btn"):
-        if new_student_name.strip():
-            new_student = {
-                'id': str(datetime.datetime.now().timestamp()),
-                'name': new_student_name.strip()
-            }
-            st.session_state.students.append(new_student)
-            st.session_state.student_input = ""  # 입력창 초기화
-            st.success(f"'{new_student_name}' 학생이 추가되었습니다!")
-            st.rerun()
-        else:
-            st.error("학생 이름을 입력해주세요!")
+# 폼을 사용해서 엔터키 입력 처리
+with st.form(key="add_student_form", clear_on_submit=True):
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        new_student_name = st.text_input("학생 이름을 입력하세요 (엔터키로 추가 가능)", key="student_input_form")
+    
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)  # 간격 맞추기
+        submit_button = st.form_submit_button("추가")
+    
+    # 폼 제출 시 학생 추가
+    if submit_button:
+        add_student_func(new_student_name)
+
+# 입력창이 초기화된 후 플래그 리셋
+if st.session_state.clear_input:
+    st.session_state.clear_input = False
 
 # 통계 정보 표시
 if st.session_state.students:
